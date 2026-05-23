@@ -65,26 +65,36 @@ export function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Strategies</CardTitle>
-                <CardDescription>
-                  Run and monitor your algorithmic strategies.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">No strategies yet.</p>
-              </CardContent>
-            </Card>
-            <Card className="sm:col-span-2 lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-base">Activity</CardTitle>
-                <CardDescription>Recent orders and signals.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">Nothing to show yet.</p>
-              </CardContent>
-            </Card>
+            <Link to="/dashboard/strategies" className="block h-full">
+              <Card className="hover:bg-muted/30 h-full transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">Strategies</CardTitle>
+                  <CardDescription>
+                    Run and monitor your algorithmic strategies.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-primary text-sm font-medium">
+                    View all strategies →
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/dashboard/activity" className="block h-full">
+              <Card className="hover:bg-muted/30 h-full transition-colors sm:col-span-2 lg:col-span-1">
+                <CardHeader>
+                  <CardTitle className="text-base">Activity</CardTitle>
+                  <CardDescription>
+                    Order history — target, stop loss, buys and sells.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-primary text-sm font-medium">
+                    View activity →
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </div>
       </main>

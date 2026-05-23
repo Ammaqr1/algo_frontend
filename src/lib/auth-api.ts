@@ -37,7 +37,8 @@ export async function loginRequest(
   email: string,
   password: string,
 ): Promise<AuthSuccess> {
-  const res = await fetch(`${API_BASE}/api/login`, {
+  console.log(`${API_BASE}/api/signin`)
+  const res = await fetch(`${API_BASE}/api/signin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),

@@ -6,6 +6,9 @@ import { DashboardPage } from './pages/DashboardPage'
 import { HomePage } from './pages/HomePage'
 import { SignInPage } from './pages/SignInPage'
 import { SignUpPage } from './pages/SignUpPage'
+import { ActivityPage } from './pages/ActivityPage'
+import { StrategiesPage } from './pages/StrategiesPage'
+import { StrategyDetailPage } from './pages/StrategyDetailPage'
 
 function App() {
   return (
@@ -17,6 +20,30 @@ function App() {
           element={
             <RequireAuth>
               <DashboardPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/dashboard/activity"
+          element={
+            <RequireAuth>
+              <ActivityPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/dashboard/strategies"
+          element={
+            <RequireAuth>
+              <StrategiesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/dashboard/strategies/:id"
+          element={
+            <RequireAuth>
+              <StrategyDetailPage />
             </RequireAuth>
           }
         />
