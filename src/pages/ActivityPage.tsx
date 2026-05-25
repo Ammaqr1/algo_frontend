@@ -11,6 +11,10 @@ import {
   fetchOrderHistory,
   type OrderHistoryItem,
 } from '@/lib/order-history-api'
+import {
+  fetchActivityStrategies,
+  type ActivityStrategyOption,
+} from '@/lib/activity-strategies-api'
 
 const EXIT_MODE_OPTIONS = [
   { value: '', label: 'All outcomes' },
@@ -35,6 +39,8 @@ export function ActivityPage() {
   const [dateTo, setDateTo] = useState(defaults.to)
   const [userOptions, setUserOptions] = useState<string[]>(['testing'])
   const [userName, setUserName] = useState('testing')
+  const [strategies, setStrategies] = useState<ActivityStrategyOption[]>([])
+  const [strategyId, setStrategyId] = useState('')
   const [mode, setMode] = useState('')
   const [exchange, setExchange] = useState('')
 
@@ -53,6 +59,7 @@ export function ActivityPage() {
         date_from: dateFrom,
         date_to: dateTo,
         user_name: userName.trim() || undefined,
+        stratergy_id: strategyId.trim() || undefined,
         mode: mode || undefined,
         exchange: exchange || undefined,
         limit,
@@ -67,7 +74,7 @@ export function ActivityPage() {
     } finally {
       setLoading(false)
     }
-  }, [dateFrom, dateTo, userName, mode, exchange, limit, offset])
+  }, [dateFrom, dateTo, userName, strategyId, mode, exchange, limit, offset])
 
   useEffect(() => {
     void load()
@@ -85,6 +92,14 @@ export function ActivityPage() {
       })
       .catch(() => {
         /* keep hardcoded testing fallback */
+      })
+  }, [])
+
+  useEffect(() => {
+    fetchActivityStrategies()
+      .then(setStrategies)
+      .catch(() => {
+        /* dropdown stays empty except "All strategies" */
       })
   }, [])
 
@@ -153,6 +168,22 @@ export function ActivityPage() {
                 {userOptions.map((name) => (
                   <option key={name} value={name}>
                     {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="strategy-filter">Strategy</Label>
+              <select
+                id="strategy-filter"
+                value={strategyId}
+                onChange={(e) => setStrategyId(e.target.value)}
+                className={selectClassName}
+              >
+                <option value="">All strategies</option>
+                {strategies.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.strategy_name}
                   </option>
                 ))}
               </select>

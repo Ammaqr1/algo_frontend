@@ -88,6 +88,7 @@ export type OrderHistoryFilters = {
   date_to: string
   user_name?: string
   strategy_name?: string
+  stratergy_id?: string
   mode?: string
   exchange?: string
   limit?: number
@@ -121,7 +122,9 @@ export async function fetchOrderHistory(
     offset: String(filters.offset ?? 0),
   })
   if (filters.user_name) params.set('user_name', filters.user_name)
-  if (filters.strategy_name) params.set('strategy_name', filters.strategy_name)
+  if (filters.stratergy_id) params.set('stratergy_id', filters.stratergy_id)
+  else if (filters.strategy_name)
+    params.set('strategy_name', filters.strategy_name)
   if (filters.mode) params.set('mode', filters.mode)
   if (filters.exchange) params.set('exchange', filters.exchange)
 
