@@ -22,6 +22,13 @@ export type StrategyConfig = {
   target_trigger_price_percentage?: string | null
   stoploss_trigger_price_percentage?: string | null
   run?: string | null
+  run_today?: string | null
+  c_a_n?: string | null
+  can_p?: string | null
+  d_n_s?: string | null
+  d_n_s_trigger?: string | null
+  d_n_s_target?: string | null
+  paper_trade?: string | null
   stratergies_id?: string | null
   createdAt?: string
   updatedAt?: string
@@ -54,6 +61,13 @@ export type StrategyConfigInput = {
   target_trigger_price_percentage?: string | null
   stoploss_trigger_price_percentage?: string | null
   run?: string | null
+  run_today?: string | null
+  c_a_n?: string | null
+  can_p?: string | null
+  d_n_s?: string | null
+  d_n_s_trigger?: string | null
+  d_n_s_target?: string | null
+  paper_trade?: string | null
 }
 
 async function errorMessageFromResponse(res: Response): Promise<string> {

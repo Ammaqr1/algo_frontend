@@ -1,4 +1,5 @@
 import { combineTimeParts, parseTimeParts } from '@/lib/time-utils'
+import { cn } from '@/lib/utils'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
@@ -10,14 +11,18 @@ type TimeInput24Props = {
   id: string
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   disabled?: boolean
+  invalid?: boolean
 }
 
 export function TimeInput24({
   id,
   value,
   onChange,
+  onBlur,
   disabled = false,
+  invalid = false,
 }: TimeInput24Props) {
   const { hour, minute } = parseTimeParts(value)
 
@@ -42,13 +47,13 @@ export function TimeInput24({
   }
 
   return (
-    <div className="flex items-center gap-1.5" id={id}>
+    <div className="flex items-center gap-1.5" id={id} onBlur={onBlur}>
       <select
         aria-label="Hour (24-hour)"
         value={hour}
         onChange={(e) => handleHourChange(e.target.value)}
         disabled={disabled}
-        className={selectClassName}
+        className={cn(selectClassName, invalid && 'border-destructive')}
       >
         <option value="">HH</option>
         {HOURS.map((h) => (
@@ -63,7 +68,7 @@ export function TimeInput24({
         value={minute}
         onChange={(e) => handleMinuteChange(e.target.value)}
         disabled={disabled}
-        className={selectClassName}
+        className={cn(selectClassName, invalid && 'border-destructive')}
       >
         <option value="">mm</option>
         {MINUTES.map((m) => (

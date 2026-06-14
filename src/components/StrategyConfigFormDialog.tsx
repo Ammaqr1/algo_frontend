@@ -13,7 +13,19 @@ import { RunToggle, isRunOn, runFromChecked } from '@/components/RunToggle'
 import { TimeInput24 } from '@/components/TimeInput24'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  REQUIRED_TIME_FIELDS,
+  hasFieldErrors,
+  numericFieldError,
+  sanitizeNumericInput,
+  timeFieldError,
+  validateStrategyConfigForm,
+  type NumericConfigField,
+  type RequiredTimeField,
+  type StrategyConfigFormErrorKey,
+} from '@/lib/strategy-config-validation'
 import { TIME_FIELDS, toTimeInputValue } from '@/lib/time-utils'
+import { cn } from '@/lib/utils'
 import type { StrategyConfig, StrategyConfigInput } from '@/lib/strategies-api'
 
 export const WEEK_DAYS = [
@@ -26,37 +38,103 @@ export const WEEK_DAYS = [
 
 export const EXCHANGES = ['NSE', 'BSE'] as const
 
-export const EMPTY_STRATEGY_CONFIG_FORM: StrategyConfigInput = {
-  week_day: '',
-  at_time_money: '',
-  start_time: '',
-  end_time: '',
-  end_entry_time: '',
-  exchange: '',
-  target_price: '',
-  stop_loss_price: '',
-  target_trigger_price_percentage: '',
-  stoploss_trigger_price_percentage: '',
+export type Exchange = (typeof EXCHANGES)[number]
+
+const COMMON_DEFAULTS: Pick<
+  StrategyConfigInput,
+  | 'run'
+  | 'c_a_n'
+  | 'd_n_s'
+  | 'd_n_s_trigger'
+  | 'd_n_s_target'
+  | 'run_today'
+  | 'paper_trade'
+  | 'can_p'
+> = {
   run: 'on',
+  c_a_n: 'on',
+  d_n_s: 'off',
+  d_n_s_trigger: '10',
+  d_n_s_target: '5',
+  run_today: 'off',
+  paper_trade: 'off',
+  can_p: '10',
 }
 
-const TEXT_FIELDS: {
-  key: keyof StrategyConfigInput
+const EXCHANGE_DEFAULTS: Record<
+  Exchange,
+  Pick<
+    StrategyConfigInput,
+    | 'target_price'
+    | 'stop_loss_price'
+    | 'target_trigger_price_percentage'
+    | 'stoploss_trigger_price_percentage'
+  >
+> = {
+  BSE: {
+    target_price: '20',
+    stop_loss_price: '5',
+    target_trigger_price_percentage: '19.9',
+    stoploss_trigger_price_percentage: '4.9',
+  },
+  NSE: {
+    target_price: '12.5',
+    stop_loss_price: '5',
+    target_trigger_price_percentage: '12.4',
+    stoploss_trigger_price_percentage: '4.9',
+  },
+}
+
+export function defaultStrategyConfigForm(
+  exchange: Exchange = 'NSE'
+): StrategyConfigInput {
+  const ex: Exchange = exchange === 'BSE' ? 'BSE' : 'NSE'
+  return {
+    week_day: '',
+    at_time_money: '',
+    start_time: '',
+    end_time: '',
+    end_entry_time: '',
+    exchange: ex,
+    ...COMMON_DEFAULTS,
+    ...EXCHANGE_DEFAULTS[ex],
+  }
+}
+
+export const EMPTY_STRATEGY_CONFIG_FORM: StrategyConfigInput =
+  defaultStrategyConfigForm('NSE')
+
+const NUMERIC_FIELDS: {
+  key: NumericConfigField
   label: string
   placeholder?: string
 }[] = [
-  { key: 'target_price', label: 'Target price', placeholder: '20' },
-  { key: 'stop_loss_price', label: 'Stop loss', placeholder: '7' },
+  { key: 'target_price', label: 'Target price', placeholder: '20 / 12.5' },
+  { key: 'stop_loss_price', label: 'Stop loss', placeholder: '5' },
   {
     key: 'target_trigger_price_percentage',
     label: 'Target trigger %',
-    placeholder: '19.9',
+    placeholder: '19.9 / 12.4',
   },
   {
     key: 'stoploss_trigger_price_percentage',
     label: 'Stoploss trigger %',
-    placeholder: '6.9',
+    placeholder: '4.9',
   },
+  { key: 'can_p', label: 'CAN %', placeholder: '10' },
+  { key: 'd_n_s_trigger', label: 'DNS trigger', placeholder: '10' },
+  { key: 'd_n_s_target', label: 'DNS target', placeholder: '5' },
+]
+
+const BOOL_FIELDS: {
+  key: 'run' | 'run_today' | 'c_a_n' | 'd_n_s' | 'paper_trade'
+  label: string
+}[] = [
+  { key: 'run', label: 'Active' },
+  { key: 'run_today', label: 'Run today' },
+  { key: 'c_a_n', label: 'Capital allocation (CAN)' },
+  { key: 'd_n_s', label: 'Dynamic stop loss' },
+  { key: 'paper_trade', label: 'Paper trade' },
 ]
 
 const TIME_FIELD_LABELS: Record<(typeof TIME_FIELDS)[number], string> = {
@@ -65,6 +143,8 @@ const TIME_FIELD_LABELS: Record<(typeof TIME_FIELDS)[number], string> = {
   end_time: 'End time',
   end_entry_time: 'Entry end',
 }
+
+const REQUIRED_TIME_FIELD_SET = new Set<string>(REQUIRED_TIME_FIELDS)
 
 const selectClassName =
   'border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50'
@@ -86,7 +166,14 @@ function configToForm(config: StrategyConfig): StrategyConfigInput {
       config.target_trigger_price_percentage ?? '',
     stoploss_trigger_price_percentage:
       config.stoploss_trigger_price_percentage ?? '',
-    run: config.run ?? 'on',
+    run: isRunOn(config.run ?? 'on') ? 'on' : 'off',
+    run_today: isRunOn(config.run_today) ? 'on' : 'off',
+    c_a_n: isRunOn(config.c_a_n ?? 'on') ? 'on' : 'off',
+    can_p: config.can_p ?? COMMON_DEFAULTS.can_p,
+    d_n_s: isRunOn(config.d_n_s) ? 'on' : 'off',
+    d_n_s_trigger: config.d_n_s_trigger ?? COMMON_DEFAULTS.d_n_s_trigger,
+    d_n_s_target: config.d_n_s_target ?? COMMON_DEFAULTS.d_n_s_target,
+    paper_trade: config.paper_trade ?? 'off',
   }
 }
 
@@ -108,14 +195,18 @@ export function StrategyConfigFormDialog({
   onSubmit,
 }: StrategyConfigFormDialogProps) {
   const [form, setForm] = useState<StrategyConfigInput>(EMPTY_STRATEGY_CONFIG_FORM)
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<StrategyConfigFormErrorKey, string>>
+  >({})
 
   useEffect(() => {
     if (open) {
-      setForm(
+      const nextForm =
         mode === 'edit' && initial
           ? configToForm(initial)
-          : { ...EMPTY_STRATEGY_CONFIG_FORM }
-      )
+          : defaultStrategyConfigForm('NSE')
+      setForm(nextForm)
+      setFieldErrors(validateStrategyConfigForm(nextForm))
     }
   }, [open, mode, initial])
 
@@ -123,8 +214,68 @@ export function StrategyConfigFormDialog({
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
+  function setNumericField(key: NumericConfigField, raw: string) {
+    const value = sanitizeNumericInput(raw)
+    const err = numericFieldError(value, { allowPartial: true })
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setFieldErrors((errs) => ({
+      ...errs,
+      [key]: err ?? undefined,
+    }))
+  }
+
+  function handleNumericBlur(key: NumericConfigField) {
+    const value = form[key] ?? ''
+    setFieldErrors((errs) => ({
+      ...errs,
+      [key]: numericFieldError(value, { allowPartial: false }) ?? undefined,
+    }))
+  }
+
+  function setTimeField(
+    key: (typeof TIME_FIELDS)[number],
+    value: string,
+    required: boolean
+  ) {
+    const normalized = toTimeInputValue(value)
+    setForm((prev) => ({ ...prev, [key]: normalized }))
+    if (required) {
+      const err = timeFieldError(normalized, { required: true })
+      setFieldErrors((errs) => ({
+        ...errs,
+        [key as RequiredTimeField]: err ?? undefined,
+      }))
+    }
+  }
+
+  function handleTimeBlur(key: RequiredTimeField) {
+    const value = form[key] ?? ''
+    setFieldErrors((errs) => ({
+      ...errs,
+      [key]: timeFieldError(value, { required: true }) ?? undefined,
+    }))
+  }
+
+  function handleExchangeChange(value: string) {
+    setForm((prev) => {
+      const next: StrategyConfigInput = { ...prev, exchange: value }
+      if (mode === 'create' && (value === 'NSE' || value === 'BSE')) {
+        Object.assign(next, EXCHANGE_DEFAULTS[value])
+      }
+      setFieldErrors(validateStrategyConfigForm(next))
+      return next
+    })
+  }
+
+  const formErrors = validateStrategyConfigForm(form)
+  const formHasErrors = hasFieldErrors(formErrors)
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const errors = validateStrategyConfigForm(form)
+    setFieldErrors(errors)
+    if (hasFieldErrors(errors)) return
+
     const payload: StrategyConfigInput = { ...form }
     if (mode === 'edit' && initial?.strategy_name) {
       payload.strategy_name = initial.strategy_name
@@ -169,7 +320,7 @@ export function StrategyConfigFormDialog({
               <select
                 id="config-exchange"
                 value={form.exchange ?? ''}
-                onChange={(e) => setField('exchange', e.target.value)}
+                onChange={(e) => handleExchangeChange(e.target.value)}
                 disabled={saving}
                 className={selectClassName}
                 required
@@ -183,41 +334,79 @@ export function StrategyConfigFormDialog({
               </select>
             </div>
 
-            {TIME_FIELDS.map((key) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={`config-${key}`}>{TIME_FIELD_LABELS[key]}</Label>
-                <TimeInput24
-                  id={`config-${key}`}
-                  value={form[key] ?? ''}
-                  onChange={(value) => setField(key, value)}
+            {TIME_FIELDS.map((key) => {
+              const required = REQUIRED_TIME_FIELD_SET.has(key)
+              const error = required
+                ? fieldErrors[key as RequiredTimeField]
+                : undefined
+              return (
+                <div key={key} className="space-y-2">
+                  <Label htmlFor={`config-${key}`}>
+                    {TIME_FIELD_LABELS[key]}
+                    {required ? (
+                      <span className="text-destructive ml-0.5">*</span>
+                    ) : null}
+                  </Label>
+                  <TimeInput24
+                    id={`config-${key}`}
+                    value={form[key] ?? ''}
+                    invalid={Boolean(error)}
+                    onChange={(value) => setTimeField(key, value, required)}
+                    onBlur={
+                      required
+                        ? () => handleTimeBlur(key as RequiredTimeField)
+                        : undefined
+                    }
+                    disabled={saving}
+                  />
+                  {error ? (
+                    <p className="text-destructive text-xs" role="alert">
+                      {error}
+                    </p>
+                  ) : null}
+                </div>
+              )
+            })}
+
+            {NUMERIC_FIELDS.map(({ key, label, placeholder }) => {
+              const error = fieldErrors[key]
+              return (
+                <div key={key} className="space-y-2">
+                  <Label htmlFor={`config-${key}`}>{label}</Label>
+                  <Input
+                    id={`config-${key}`}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    value={form[key] ?? ''}
+                    onChange={(e) => setNumericField(key, e.target.value)}
+                    onBlur={() => handleNumericBlur(key)}
+                    placeholder={placeholder}
+                    disabled={saving}
+                    aria-invalid={Boolean(error)}
+                    className={cn(error && 'border-destructive')}
+                  />
+                  {error ? (
+                    <p className="text-destructive text-xs" role="alert">
+                      {error}
+                    </p>
+                  ) : null}
+                </div>
+              )
+            })}
+
+            {BOOL_FIELDS.map(({ key, label }) => (
+              <div key={key} className="space-y-2 sm:col-span-2">
+                <Label>{label}</Label>
+                <RunToggle
+                  checked={isRunOn(form[key])}
                   disabled={saving}
+                  onCheckedChange={(checked) =>
+                    setField(key, runFromChecked(checked))
+                  }
                 />
               </div>
             ))}
-
-            {TEXT_FIELDS.map(({ key, label, placeholder }) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={`config-${key}`}>{label}</Label>
-                <Input
-                  id={`config-${key}`}
-                  value={form[key] ?? ''}
-                  onChange={(e) => setField(key, e.target.value)}
-                  placeholder={placeholder}
-                  disabled={saving}
-                />
-              </div>
-            ))}
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Active</Label>
-              <RunToggle
-                checked={isRunOn(form.run)}
-                disabled={saving}
-                onCheckedChange={(checked) =>
-                  setField('run', runFromChecked(checked))
-                }
-              />
-            </div>
           </div>
           <DialogFooter>
             <Button
@@ -231,7 +420,10 @@ export function StrategyConfigFormDialog({
             <Button
               type="submit"
               disabled={
-                saving || !form.week_day?.trim() || !form.exchange?.trim()
+                saving ||
+                !form.week_day?.trim() ||
+                !form.exchange?.trim() ||
+                formHasErrors
               }
             >
               {saving ? 'Saving…' : mode === 'create' ? 'Create' : 'Save'}

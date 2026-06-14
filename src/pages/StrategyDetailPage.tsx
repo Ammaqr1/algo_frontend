@@ -61,6 +61,31 @@ const TABLE_COLUMNS: {
   },
   { key: 'target_price', label: 'Target' },
   { key: 'stop_loss_price', label: 'Stop loss' },
+  { key: 'target_trigger_price_percentage', label: 'Target trig %' },
+  { key: 'stoploss_trigger_price_percentage', label: 'SL trig %' },
+  {
+    key: 'run_today',
+    label: 'Run today',
+    cell: (row) => (isRunOn(row.run_today) ? 'Yes' : 'No'),
+  },
+  {
+    key: 'c_a_n',
+    label: 'CAN',
+    cell: (row) => (isRunOn(row.c_a_n) ? 'Yes' : 'No'),
+  },
+  { key: 'can_p', label: 'CAN %' },
+  {
+    key: 'd_n_s',
+    label: 'Dyn. SL',
+    cell: (row) => (isRunOn(row.d_n_s) ? 'Yes' : 'No'),
+  },
+  { key: 'd_n_s_trigger', label: 'DNS trig' },
+  { key: 'd_n_s_target', label: 'DNS target' },
+  {
+    key: 'paper_trade',
+    label: 'Paper',
+    cell: (row) => (isRunOn(row.paper_trade) ? 'Yes' : 'No'),
+  },
 ]
 
 function cellValue(row: StrategyConfig, key: keyof StrategyConfig): string {
@@ -275,7 +300,7 @@ export function StrategyDetailPage() {
               ) : (
                 <div className="ring-foreground/10 overflow-hidden rounded-xl ring-1">
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[60rem] border-collapse text-sm">
+                    <table className="w-full min-w-[90rem] border-collapse text-sm">
                       <thead>
                         <tr className="border-border bg-muted/50 border-b">
                           {TABLE_COLUMNS.map((col) => (
