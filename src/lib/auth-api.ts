@@ -3,7 +3,7 @@ const API_BASE =
     ? import.meta.env.VITE_DEV_API_URL
     : import.meta.env.VITE_PROD_API_URL;
 
-
+console.log("import.meta.env", import.meta.env);
 console.log("API_BASE", API_BASE);
 export const AUTH_TOKEN_KEY = "access_token";
 export const AUTH_USER_KEY = "auth_user";
