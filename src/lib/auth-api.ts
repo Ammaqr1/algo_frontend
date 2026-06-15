@@ -1,52 +1,57 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:5000'
+const API_BASE =
+  import.meta.env.MODE === "development"
+    ? import.meta.env.VITE_DEV_API_URL
+    : import.meta.env.VITE_PROD_API_URL;
 
-export const AUTH_TOKEN_KEY = 'access_token'
-export const AUTH_USER_KEY = 'auth_user'
+
+console.log("API_BASE", API_BASE);
+export const AUTH_TOKEN_KEY = "access_token";
+export const AUTH_USER_KEY = "auth_user";
 
 export type AuthUser = {
-  id: string
-  email: string
-  name: string | null
-}
+  id: string;
+  email: string;
+  name: string | null;
+};
 
 export type AuthSuccess = {
-  access_token: string
-  token_type: string
-  expires_in: number
-  user: AuthUser
-}
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user: AuthUser;
+};
 
 async function errorMessageFromResponse(res: Response): Promise<string> {
   try {
-    const data: unknown = await res.json()
+    const data: unknown = await res.json();
     if (
       data &&
-      typeof data === 'object' &&
-      'error' in data &&
-      typeof (data as { error: unknown }).error === 'string'
+      typeof data === "object" &&
+      "error" in data &&
+      typeof (data as { error: unknown }).error === "string"
     ) {
-      return (data as { error: string }).error
+      return (data as { error: string }).error;
     }
   } catch {
     /* ignore */
   }
-  return res.statusText || 'Request failed'
+  return res.statusText || "Request failed";
 }
 
 export async function loginRequest(
   email: string,
   password: string,
 ): Promise<AuthSuccess> {
-  console.log(`${API_BASE}/api/signin`)
+  console.log(`${API_BASE}/api/signin`);
   const res = await fetch(`${API_BASE}/api/signin`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
-  })
+  });
   if (!res.ok) {
-    throw new Error(await errorMessageFromResponse(res))
+    throw new Error(await errorMessageFromResponse(res));
   }
-  return res.json() as Promise<AuthSuccess>
+  return res.json() as Promise<AuthSuccess>;
 }
 
 export async function signupRequest(
@@ -55,40 +60,40 @@ export async function signupRequest(
   name: string | null,
 ): Promise<AuthSuccess> {
   const res = await fetch(`${API_BASE}/api/signup`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, name }),
-  })
+  });
   if (!res.ok) {
-    throw new Error(await errorMessageFromResponse(res))
+    throw new Error(await errorMessageFromResponse(res));
   }
-  return res.json() as Promise<AuthSuccess>
+  return res.json() as Promise<AuthSuccess>;
 }
 
 export function persistSession(data: AuthSuccess): void {
-  localStorage.setItem(AUTH_TOKEN_KEY, data.access_token)
-  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user))
+  localStorage.setItem(AUTH_TOKEN_KEY, data.access_token);
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
 }
 
 export function clearSession(): void {
-  localStorage.removeItem(AUTH_TOKEN_KEY)
-  localStorage.removeItem(AUTH_USER_KEY)
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
 }
 
 export function getStoredToken(): string | null {
-  return localStorage.getItem(AUTH_TOKEN_KEY)
+  return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
 export function getStoredUser(): AuthUser | null {
   try {
-    const raw = localStorage.getItem(AUTH_USER_KEY)
-    if (!raw) return null
-    return JSON.parse(raw) as AuthUser
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AuthUser;
   } catch {
-    return null
+    return null;
   }
 }
 
 export function isAuthenticated(): boolean {
-  return Boolean(getStoredToken() && getStoredUser())
+  return Boolean(getStoredToken() && getStoredUser());
 }
