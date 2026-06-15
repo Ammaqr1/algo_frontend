@@ -3,8 +3,6 @@ export const API_BASE =
     ? import.meta.env.VITE_DEV_API_URL
     : import.meta.env.VITE_PROD_API_URL;
 
-console.log("import.meta.env", import.meta.env);
-console.log("API_BASE", API_BASE);
 export const AUTH_TOKEN_KEY = "access_token";
 export const AUTH_USER_KEY = "auth_user";
 
@@ -20,6 +18,16 @@ export type AuthSuccess = {
   expires_in: number;
   user: AuthUser;
 };
+
+export class AuthError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "AuthError";
+    this.status = status;
+  }
+}
 
 async function errorMessageFromResponse(res: Response): Promise<string> {
   try {
@@ -38,11 +46,74 @@ async function errorMessageFromResponse(res: Response): Promise<string> {
   return res.statusText || "Request failed";
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const [, payloadB64] = token.split(".");
+    if (!payloadB64) return true;
+    const payload = JSON.parse(
+      atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")),
+    ) as { exp?: number };
+    if (typeof payload.exp !== "number") return true;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
+function authHeaders(init?: RequestInit): Headers {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type") && init?.body != null) {
+    headers.set("Content-Type", "application/json");
+  }
+  const token = getStoredToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  return headers;
+}
+
+export async function authFetch(
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: authHeaders(init),
+  });
+
+  if (res.status === 401) {
+    clearSession();
+    if (
+      typeof window !== "undefined" &&
+      !window.location.pathname.startsWith("/sign-in") &&
+      !window.location.pathname.startsWith("/sign-up")
+    ) {
+      window.location.assign("/sign-in");
+    }
+    throw new AuthError(await errorMessageFromResponse(res), 401);
+  }
+
+  return res;
+}
+
+export async function apiRequest<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const res = await authFetch(path, init);
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res));
+  }
+  if (res.status === 204) {
+    return undefined as T;
+  }
+  return res.json() as Promise<T>;
+}
+
 export async function loginRequest(
   email: string,
   password: string,
 ): Promise<AuthSuccess> {
-  console.log(`${API_BASE}/api/signin`);
   const res = await fetch(`${API_BASE}/api/signin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -95,5 +166,12 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function isAuthenticated(): boolean {
-  return Boolean(getStoredToken() && getStoredUser());
+  const token = getStoredToken();
+  const user = getStoredUser();
+  if (!token || !user) return false;
+  if (isTokenExpired(token)) {
+    clearSession();
+    return false;
+  }
+  return true;
 }

@@ -1,4 +1,4 @@
-import { API_BASE } from './auth-api'
+import { apiRequest } from './auth-api'
 
 export type ActivityStrategyOption = {
   id: string
@@ -9,30 +9,11 @@ export type ActivityStrategiesResponse = {
   strategies: ActivityStrategyOption[]
 }
 
-async function errorMessageFromResponse(res: Response): Promise<string> {
-  try {
-    const data: unknown = await res.json()
-    if (
-      data &&
-      typeof data === 'object' &&
-      'error' in data &&
-      typeof (data as { error: unknown }).error === 'string'
-    ) {
-      return (data as { error: string }).error
-    }
-  } catch {
-    /* ignore */
-  }
-  return res.statusText || 'Request failed'
-}
-
 export async function fetchActivityStrategies(): Promise<
   ActivityStrategyOption[]
 > {
-  const res = await fetch(`${API_BASE}/api/activity-strategies`)
-  if (!res.ok) {
-    throw new Error(await errorMessageFromResponse(res))
-  }
-  const data = (await res.json()) as ActivityStrategiesResponse
+  const data = await apiRequest<ActivityStrategiesResponse>(
+    '/api/activity-strategies'
+  )
   return data.strategies ?? []
 }

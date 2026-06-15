@@ -1,4 +1,4 @@
-import { API_BASE } from './auth-api'
+import { apiRequest } from './auth-api'
 
 export type StrategyGroup = {
   id: string
@@ -68,40 +68,6 @@ export type StrategyConfigInput = {
   d_n_s_trigger?: string | null
   d_n_s_target?: string | null
   paper_trade?: string | null
-}
-
-async function errorMessageFromResponse(res: Response): Promise<string> {
-  try {
-    const data: unknown = await res.json()
-    if (
-      data &&
-      typeof data === 'object' &&
-      'error' in data &&
-      typeof (data as { error: unknown }).error === 'string'
-    ) {
-      return (data as { error: string }).error
-    }
-  } catch {
-    /* ignore */
-  }
-  return res.statusText || 'Request failed'
-}
-
-async function apiRequest<T>(
-  path: string,
-  init?: RequestInit
-): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
-  })
-  if (!res.ok) {
-    throw new Error(await errorMessageFromResponse(res))
-  }
-  if (res.status === 204) {
-    return undefined as T
-  }
-  return res.json() as Promise<T>
 }
 
 export async function fetchStrategies(): Promise<StrategyGroup[]> {

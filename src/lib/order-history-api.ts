@@ -1,4 +1,5 @@
-import { API_BASE } from './auth-api'
+import { apiRequest } from './auth-api'
+
 export type ExitMode =
   | 'target'
   | 'stop loss'
@@ -94,23 +95,6 @@ export type OrderHistoryFilters = {
   offset?: number
 }
 
-async function errorMessageFromResponse(res: Response): Promise<string> {
-  try {
-    const data: unknown = await res.json()
-    if (
-      data &&
-      typeof data === 'object' &&
-      'error' in data &&
-      typeof (data as { error: unknown }).error === 'string'
-    ) {
-      return (data as { error: string }).error
-    }
-  } catch {
-    /* ignore */
-  }
-  return res.statusText || 'Request failed'
-}
-
 export async function fetchOrderHistory(
   filters: OrderHistoryFilters
 ): Promise<OrderHistoryResponse> {
@@ -127,9 +111,5 @@ export async function fetchOrderHistory(
   if (filters.mode) params.set('mode', filters.mode)
   if (filters.exchange) params.set('exchange', filters.exchange)
 
-  const res = await fetch(`${API_BASE}/api/order-history?${params}`)
-  if (!res.ok) {
-    throw new Error(await errorMessageFromResponse(res))
-  }
-  return res.json() as Promise<OrderHistoryResponse>
+  return apiRequest<OrderHistoryResponse>(`/api/order-history?${params}`)
 }
