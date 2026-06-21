@@ -1,4 +1,4 @@
-import { toTimeInputValue } from '@/lib/time-utils'
+import { toTimeInputValue, timeFieldUsesSeconds } from '@/lib/time-utils'
 import type { StrategyConfigInput } from '@/lib/strategies-api'
 
 export const REQUIRED_TIME_FIELDS = [
@@ -90,17 +90,20 @@ export function hasFieldErrors(
 
 export function timeFieldError(
   value: string,
-  options?: { required?: boolean }
+  options?: { required?: boolean; withSeconds?: boolean }
 ): string | null {
   const trimmed = value.trim()
   const required = options?.required !== false
+  const withSeconds = options?.withSeconds === true
 
   if (!trimmed) {
     return required ? 'Required' : null
   }
 
-  if (!toTimeInputValue(trimmed)) {
-    return 'Enter a valid time (HH:mm)'
+  if (!toTimeInputValue(trimmed, { withSeconds })) {
+    return withSeconds
+      ? 'Enter a valid time (HH:mm:ss)'
+      : 'Enter a valid time (HH:mm)'
   }
 
   return null
@@ -111,7 +114,8 @@ export function validateRequiredTimeFields(
 ): Partial<Record<RequiredTimeField, string>> {
   const errors: Partial<Record<RequiredTimeField, string>> = {}
   for (const key of REQUIRED_TIME_FIELDS) {
-    const err = timeFieldError(form[key] ?? '', { required: true })
+    const withSeconds = timeFieldUsesSeconds(key)
+    const err = timeFieldError(form[key] ?? '', { required: true, withSeconds })
     if (err) errors[key] = err
   }
   return errors

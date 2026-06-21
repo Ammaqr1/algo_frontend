@@ -20,8 +20,8 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="bg-background flex min-h-svh flex-col">
-      <header className="border-border flex items-center justify-between border-b px-4 py-3 md:px-6">
+    <div className="flex min-h-svh flex-col">
+      <header className="border-border bg-background/75 supports-[backdrop-filter]:bg-background/60 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md md:px-6">
         <Link
           to="/dashboard"
           className="font-heading text-foreground text-lg font-semibold tracking-tight"
@@ -65,6 +65,36 @@ export function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
+            <Link to="/dashboard/tokens" className="block h-full">
+              <Card className="hover:bg-muted/30 h-full transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">API tokens</CardTitle>
+                  <CardDescription>
+                    Broker credentials, mode toggle, and daily key verification.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-primary text-sm font-medium">
+                    View tokens →
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/dashboard/schedule" className="block h-full">
+              <Card className="hover:bg-muted/30 h-full transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">Running schedule</CardTitle>
+                  <CardDescription>
+                    Today and tomorrow&apos;s active strategies by type.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-primary text-sm font-medium">
+                    View schedule →
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
             <Link to="/dashboard/strategies" className="block h-full">
               <Card className="hover:bg-muted/30 h-full transition-colors">
                 <CardHeader>

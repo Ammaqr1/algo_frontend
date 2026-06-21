@@ -23,16 +23,17 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getStoredUser } from '@/lib/auth-api'
 import {
-  createStrategy,
-  deleteStrategy,
-  fetchStrategies,
-  updateStrategy,
-  type StrategyGroup,
+  createStrategyType,
+  deleteStrategyType,
+  fetchStrategyTypes,
+  strategyTypePath,
+  updateStrategyType,
+  type StrategyType,
 } from '@/lib/strategies-api'
 
 export function StrategiesPage() {
   const navigate = useNavigate()
-  const [strategies, setStrategies] = useState<StrategyGroup[]>([])
+  const [strategyTypes, setStrategyTypes] = useState<StrategyType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,23 +42,23 @@ export function StrategiesPage() {
   const [creating, setCreating] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
-  const [editingGroup, setEditingGroup] = useState<StrategyGroup | null>(null)
+  const [editingType, setEditingType] = useState<StrategyType | null>(null)
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
 
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deletingGroup, setDeletingGroup] = useState<StrategyGroup | null>(null)
+  const [deletingType, setDeletingType] = useState<StrategyType | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const loadStrategies = useCallback(async () => {
+  const loadStrategyTypes = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchStrategies()
-      setStrategies(data)
+      const data = await fetchStrategyTypes()
+      setStrategyTypes(data)
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Failed to load strategies.'
+        err instanceof Error ? err.message : 'Failed to load strategy types.'
       setError(message)
     } finally {
       setLoading(false)
@@ -65,8 +66,8 @@ export function StrategiesPage() {
   }, [])
 
   useEffect(() => {
-    void loadStrategies()
-  }, [loadStrategies])
+    void loadStrategyTypes()
+  }, [loadStrategyTypes])
 
   function openCreateDialog() {
     setNewName('')
@@ -74,9 +75,9 @@ export function StrategiesPage() {
     setError(null)
   }
 
-  function openEditDialog(group: StrategyGroup) {
-    setEditingGroup(group)
-    setEditName(group.strategy_name)
+  function openEditDialog(type: StrategyType) {
+    setEditingType(type)
+    setEditName(type.stratergiesType)
     setEditOpen(true)
     setError(null)
   }
@@ -88,7 +89,7 @@ export function StrategiesPage() {
 
   function closeEditDialog() {
     setEditOpen(false)
-    setEditingGroup(null)
+    setEditingType(null)
     setEditName('')
   }
 
@@ -101,15 +102,15 @@ export function StrategiesPage() {
     setError(null)
     try {
       const user = getStoredUser()
-      const created = await createStrategy({
-        strategy_name: name,
+      const created = await createStrategyType({
+        stratergiesType: name,
         createdby: user?.name ?? user?.email ?? null,
       })
-      setStrategies((prev) => [created, ...prev])
+      setStrategyTypes((prev) => [created, ...prev])
       closeCreateDialog()
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to create strategy.'
+        err instanceof Error ? err.message : 'Failed to create strategy type.'
       )
     } finally {
       setCreating(false)
@@ -118,55 +119,55 @@ export function StrategiesPage() {
 
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault()
-    if (!editingGroup) return
+    if (!editingType) return
     const name = editName.trim()
     if (!name) return
 
     setSaving(true)
     setError(null)
     try {
-      const updated = await updateStrategy(editingGroup.id, {
-        strategy_name: name,
+      const updated = await updateStrategyType(editingType.id, {
+        stratergiesType: name,
       })
-      setStrategies((prev) =>
-        prev.map((s) => (s.id === editingGroup.id ? updated : s))
+      setStrategyTypes((prev) =>
+        prev.map((s) => (s.id === editingType.id ? updated : s))
       )
       closeEditDialog()
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to update strategy.'
+        err instanceof Error ? err.message : 'Failed to update strategy type.'
       )
     } finally {
       setSaving(false)
     }
   }
 
-  function openDeleteDialog(group: StrategyGroup) {
-    setDeletingGroup(group)
+  function openDeleteDialog(type: StrategyType) {
+    setDeletingType(type)
     setDeleteOpen(true)
     setError(null)
   }
 
   function closeDeleteDialog() {
     setDeleteOpen(false)
-    setDeletingGroup(null)
+    setDeletingType(null)
   }
 
   async function handleConfirmDelete() {
-    if (!deletingGroup) return
+    if (!deletingType) return
 
     setDeleting(true)
     setError(null)
     try {
-      await deleteStrategy(deletingGroup.id)
-      setStrategies((prev) =>
-        prev.filter((s) => s.id !== deletingGroup.id)
+      await deleteStrategyType(deletingType.id)
+      setStrategyTypes((prev) =>
+        prev.filter((s) => s.id !== deletingType.id)
       )
-      if (editingGroup?.id === deletingGroup.id) closeEditDialog()
+      if (editingType?.id === deletingType.id) closeEditDialog()
       closeDeleteDialog()
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to delete strategy.'
+        err instanceof Error ? err.message : 'Failed to delete strategy type.'
       )
     } finally {
       setDeleting(false)
@@ -174,8 +175,8 @@ export function StrategiesPage() {
   }
 
   return (
-    <div className="bg-background flex min-h-svh flex-col">
-      <header className="border-border flex items-center justify-between border-b px-4 py-3 md:px-6">
+    <div className="flex min-h-svh flex-col">
+      <header className="border-border bg-background/75 supports-[backdrop-filter]:bg-background/60 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md md:px-6">
         <Link
           to="/dashboard"
           className="font-heading text-foreground text-lg font-semibold tracking-tight"
@@ -198,12 +199,12 @@ export function StrategiesPage() {
                 Strategies
               </h1>
               <p className="text-muted-foreground mt-1 text-sm">
-                Create, rename, and remove strategy groups.
+                Choose a strategy type to view sessions and configs.
               </p>
             </div>
             <Button type="button" onClick={openCreateDialog}>
               <PlusIcon data-icon="inline-start" />
-              New strategy
+              New strategy type
             </Button>
           </div>
 
@@ -214,50 +215,44 @@ export function StrategiesPage() {
           ) : null}
 
           {loading ? (
-            <p className="text-muted-foreground text-sm">Loading strategies…</p>
-          ) : strategies.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Loading strategy types…</p>
+          ) : strategyTypes.length === 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">No strategies yet</CardTitle>
+                <CardTitle className="text-base">No strategy types yet</CardTitle>
                 <CardDescription>
-                  Click &quot;New strategy&quot; to create your first one.
+                  Click &quot;New strategy type&quot; to create your first one.
                 </CardDescription>
               </CardHeader>
             </Card>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {strategies.map((group) => (
+              {strategyTypes.map((type) => (
                 <Card
-                  key={group.id}
+                  key={type.id}
                   role="button"
                   tabIndex={0}
                   className="min-h-44 cursor-pointer transition-colors hover:bg-muted/30"
-                  onClick={() =>
-                    navigate(
-                      `/dashboard/strategies/${encodeURIComponent(group.id)}`
-                    )
-                  }
+                  onClick={() => navigate(strategyTypePath(type))}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
-                      navigate(
-                        `/dashboard/strategies/${encodeURIComponent(group.id)}`
-                      )
+                      navigate(strategyTypePath(type))
                     }
                   }}
                 >
                   <CardHeader className="px-5 py-6">
                     <CardTitle className="text-lg pr-2">
-                      {group.strategy_name}
+                      {type.stratergiesType}
                     </CardTitle>
-                    {group.createdAt ? (
+                    {type.createdAt ? (
                       <CardDescription>
                         Created{' '}
-                        {new Date(group.createdAt).toLocaleDateString()}
+                        {new Date(type.createdAt).toLocaleDateString()}
                       </CardDescription>
                     ) : null}
-                    {group.createdby ? (
-                      <CardDescription>By {group.createdby}</CardDescription>
+                    {type.createdby ? (
+                      <CardDescription>By {type.createdby}</CardDescription>
                     ) : null}
                     <CardAction>
                       <div
@@ -269,8 +264,8 @@ export function StrategiesPage() {
                           type="button"
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Edit ${group.strategy_name}`}
-                          onClick={() => openEditDialog(group)}
+                          aria-label={`Edit ${type.stratergiesType}`}
+                          onClick={() => openEditDialog(type)}
                         >
                           <PencilIcon />
                         </Button>
@@ -279,9 +274,9 @@ export function StrategiesPage() {
                           variant="ghost"
                           size="icon-sm"
                           className="text-destructive hover:text-destructive"
-                          aria-label={`Delete ${group.strategy_name}`}
-                          disabled={deleting && deletingGroup?.id === group.id}
-                          onClick={() => openDeleteDialog(group)}
+                          aria-label={`Delete ${type.stratergiesType}`}
+                          disabled={deleting && deletingType?.id === type.id}
+                          onClick={() => openDeleteDialog(type)}
                         >
                           <Trash2Icon />
                         </Button>
@@ -304,16 +299,16 @@ export function StrategiesPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New strategy</DialogTitle>
+            <DialogTitle>New strategy type</DialogTitle>
             <DialogDescription>
-              Enter a name for your strategy group.
+              Enter a name for your strategy type.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => void handleCreate(e)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="create-strategy-name">Name</Label>
+              <Label htmlFor="create-strategy-type-name">Name</Label>
               <Input
-                id="create-strategy-name"
+                id="create-strategy-type-name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="e.g. Nifty morning"
@@ -344,23 +339,23 @@ export function StrategiesPage() {
         onOpenChange={(open) => {
           setEditOpen(open)
           if (!open) {
-            setEditingGroup(null)
+            setEditingType(null)
             setEditName('')
           }
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit strategy</DialogTitle>
+            <DialogTitle>Edit strategy type</DialogTitle>
             <DialogDescription>
-              Update the name for this strategy group.
+              Update the name for this strategy type.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => void handleSaveEdit(e)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-strategy-name">Name</Label>
+              <Label htmlFor="edit-strategy-type-name">Name</Label>
               <Input
-                id="edit-strategy-name"
+                id="edit-strategy-type-name"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 disabled={saving}
@@ -394,14 +389,13 @@ export function StrategiesPage() {
       >
         <DialogContent showCloseButton={!deleting}>
           <DialogHeader>
-            <DialogTitle>Delete strategy?</DialogTitle>
+            <DialogTitle>Delete strategy type?</DialogTitle>
             <DialogDescription>
               This will permanently delete{' '}
               <span className="font-medium text-foreground">
-                {deletingGroup?.strategy_name}
+                {deletingType?.stratergiesType}
               </span>
-              . Linked config rows will be unlinked. This action cannot be
-              undone.
+              {' '}and all linked sessions. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

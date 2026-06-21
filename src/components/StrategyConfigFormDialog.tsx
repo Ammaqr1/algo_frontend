@@ -24,7 +24,7 @@ import {
   type RequiredTimeField,
   type StrategyConfigFormErrorKey,
 } from '@/lib/strategy-config-validation'
-import { TIME_FIELDS, toTimeInputValue } from '@/lib/time-utils'
+import { TIME_FIELDS, timeFieldUsesSeconds, toTimeInputValue } from '@/lib/time-utils'
 import { cn } from '@/lib/utils'
 import type { StrategyConfig, StrategyConfigInput } from '@/lib/strategies-api'
 
@@ -152,9 +152,9 @@ const selectClassName =
 function configToForm(config: StrategyConfig): StrategyConfigInput {
   return {
     week_day: config.week_day ?? '',
-    at_time_money: toTimeInputValue(config.at_time_money),
-    start_time: toTimeInputValue(config.start_time),
-    end_time: toTimeInputValue(config.end_time),
+    at_time_money: toTimeInputValue(config.at_time_money, { withSeconds: true }),
+    start_time: toTimeInputValue(config.start_time, { withSeconds: true }),
+    end_time: toTimeInputValue(config.end_time, { withSeconds: true }),
     end_entry_time: toTimeInputValue(config.end_entry_time),
     exchange:
       EXCHANGES.find(
@@ -178,6 +178,7 @@ function configToForm(config: StrategyConfig): StrategyConfigInput {
 }
 
 type StrategyConfigFormDialogProps = {
+  stratergyType: string
   open: boolean
   mode: 'create' | 'edit'
   initial?: StrategyConfig | null
@@ -191,6 +192,7 @@ export function StrategyConfigFormDialog({
   mode,
   initial,
   saving,
+  stratergyType: _stratergyType,
   onOpenChange,
   onSubmit,
 }: StrategyConfigFormDialogProps) {
@@ -237,10 +239,11 @@ export function StrategyConfigFormDialog({
     value: string,
     required: boolean
   ) {
-    const normalized = toTimeInputValue(value)
+    const withSeconds = timeFieldUsesSeconds(key)
+    const normalized = toTimeInputValue(value, { withSeconds })
     setForm((prev) => ({ ...prev, [key]: normalized }))
     if (required) {
-      const err = timeFieldError(normalized, { required: true })
+      const err = timeFieldError(normalized, { required: true, withSeconds })
       setFieldErrors((errs) => ({
         ...errs,
         [key as RequiredTimeField]: err ?? undefined,
@@ -250,9 +253,11 @@ export function StrategyConfigFormDialog({
 
   function handleTimeBlur(key: RequiredTimeField) {
     const value = form[key] ?? ''
+    const withSeconds = timeFieldUsesSeconds(key)
     setFieldErrors((errs) => ({
       ...errs,
-      [key]: timeFieldError(value, { required: true }) ?? undefined,
+      [key]:
+        timeFieldError(value, { required: true, withSeconds }) ?? undefined,
     }))
   }
 
@@ -336,6 +341,8 @@ export function StrategyConfigFormDialog({
 
             {TIME_FIELDS.map((key) => {
               const required = REQUIRED_TIME_FIELD_SET.has(key)
+              const withSeconds = timeFieldUsesSeconds(key) && _stratergyType === 'Straddle'
+              
               const error = required
                 ? fieldErrors[key as RequiredTimeField]
                 : undefined
@@ -350,6 +357,7 @@ export function StrategyConfigFormDialog({
                   <TimeInput24
                     id={`config-${key}`}
                     value={form[key] ?? ''}
+                    includeSeconds={withSeconds}
                     invalid={Boolean(error)}
                     onChange={(value) => setTimeField(key, value, required)}
                     onBlur={

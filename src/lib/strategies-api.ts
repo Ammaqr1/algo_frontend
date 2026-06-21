@@ -1,11 +1,49 @@
 import { apiRequest } from './auth-api'
 
-export type StrategyGroup = {
+export type StrategyType = {
   id: string
-  strategy_name: string
+  stratergiesType: string
   createdAt?: string
   updatedAt?: string
   createdby?: string | null
+}
+
+export type StrategyTypeDetail = StrategyType & {
+  stratergies: StrategyGroup[]
+}
+
+export type CreateStrategyTypeInput = {
+  stratergiesType: string
+  createdby?: string | null
+}
+
+export type UpdateStrategyTypeInput = {
+  stratergiesType?: string
+  createdby?: string | null
+}
+
+export type StrategyGroup = {
+  id: string
+  strategy_name: string
+  stratergiesTypeId?: string | null
+  stratergiesTypeName?: string | null
+  createdAt?: string
+  updatedAt?: string
+  createdby?: string | null
+}
+
+export function strategyTypePath(type: {
+  stratergiesType: string
+  id: string
+}): string {
+  return `/dashboard/strategies/${encodeURIComponent(type.stratergiesType)}/${encodeURIComponent(type.id)}`
+}
+
+export function sessionDetailPath(
+  group: StrategyGroup,
+  type: { stratergiesType: string; id: string }
+): string {
+  return `/dashboard/strategies/${encodeURIComponent(type.stratergiesType)}/${encodeURIComponent(type.id)}/${encodeURIComponent(group.strategy_name)}/${encodeURIComponent(group.id)}`
 }
 
 export type StrategyConfig = {
@@ -40,6 +78,7 @@ export type StrategyGroupDetail = StrategyGroup & {
 
 export type CreateStrategyInput = {
   strategy_name: string
+  stratergiesTypeId?: string
   createdby?: string | null
 }
 
@@ -68,6 +107,67 @@ export type StrategyConfigInput = {
   d_n_s_trigger?: string | null
   d_n_s_target?: string | null
   paper_trade?: string | null
+}
+
+export async function fetchStrategyTypes(): Promise<StrategyType[]> {
+  return apiRequest<StrategyType[]>('/api/strategy-types')
+}
+
+export async function fetchStrategyTypeById(
+  id: string
+): Promise<StrategyTypeDetail> {
+  return apiRequest<StrategyTypeDetail>(
+    `/api/strategy-types/${encodeURIComponent(id)}`
+  )
+}
+
+export async function createStrategyType(
+  input: CreateStrategyTypeInput
+): Promise<StrategyType> {
+  return apiRequest<StrategyType>('/api/strategy-types', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function updateStrategyType(
+  id: string,
+  input: UpdateStrategyTypeInput
+): Promise<StrategyType> {
+  return apiRequest<StrategyType>(
+    `/api/strategy-types/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }
+  )
+}
+
+export async function deleteStrategyType(id: string): Promise<void> {
+  await apiRequest<void>(`/api/strategy-types/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function fetchStrategiesByTypeId(
+  typeId: string
+): Promise<StrategyGroup[]> {
+  return apiRequest<StrategyGroup[]>(
+    `/api/strategy-types/${encodeURIComponent(typeId)}/strategies`
+  )
+}
+
+export async function createStrategyForType(
+  typeId: string,
+  input: Omit<CreateStrategyInput, 'stratergiesTypeId'>
+): Promise<StrategyGroup> {
+  return apiRequest<StrategyGroup>(
+    `/api/strategy-types/${encodeURIComponent(typeId)}/strategies`,
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }
+  )
 }
 
 export async function fetchStrategies(): Promise<StrategyGroup[]> {

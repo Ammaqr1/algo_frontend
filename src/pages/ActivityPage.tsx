@@ -113,8 +113,8 @@ export function ActivityPage() {
   const canNext = offset + limit < total
 
   return (
-    <div className="bg-background flex min-h-svh flex-col">
-      <header className="border-border flex items-center justify-between border-b px-4 py-3 md:px-6">
+    <div className="flex min-h-svh flex-col">
+      <header className="border-border bg-background/75 supports-[backdrop-filter]:bg-background/60 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md md:px-6">
         <Link
           to="/dashboard"
           className="font-heading text-foreground text-lg font-semibold tracking-tight"

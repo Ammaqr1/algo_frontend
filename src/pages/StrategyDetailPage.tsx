@@ -25,6 +25,7 @@ import {
   deleteStrategyConfig,
   fetchStrategyById,
   setStrategyConfigRun,
+  strategyTypePath,
   updateStrategyConfig,
   type StrategyConfig,
   type StrategyConfigInput,
@@ -98,7 +99,13 @@ function cellValue(row: StrategyConfig, key: keyof StrategyConfig): string {
 }
 
 export function StrategyDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { typeName, sessionId } = useParams<{
+    typeName: string
+    typeId: string
+    sessionName: string
+    sessionId: string
+  }>()
+  const stratergyId = sessionId
   const [detail, setDetail] = useState<StrategyGroupDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -118,7 +125,7 @@ export function StrategyDetailPage() {
   const [togglingRunId, setTogglingRunId] = useState<string | null>(null)
 
   const loadDetail = useCallback(async () => {
-    if (!id) {
+    if (!stratergyId) {
       setError('Strategy id is missing.')
       setLoading(false)
       return
@@ -126,7 +133,7 @@ export function StrategyDetailPage() {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchStrategyById(id)
+      const data = await fetchStrategyById(stratergyId)
       setDetail(data)
     } catch (err) {
       setError(
@@ -135,7 +142,7 @@ export function StrategyDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [stratergyId])
 
   useEffect(() => {
     void loadDetail()
@@ -169,12 +176,12 @@ export function StrategyDetailPage() {
   }
 
   async function handleFormSubmit(values: StrategyConfigInput) {
-    if (!id) return
+    if (!stratergyId) return
     setSaving(true)
     setError(null)
     try {
       if (formMode === 'create') {
-        await createStrategyConfig(id, values)
+        await createStrategyConfig(stratergyId, values)
       } else if (editingConfig) {
         await updateStrategyConfig(editingConfig.id, values)
       }
@@ -238,8 +245,8 @@ export function StrategyDetailPage() {
       : 'this config row'
 
   return (
-    <div className="bg-background flex min-h-svh flex-col">
-      <header className="border-border flex items-center justify-between border-b px-4 py-3 md:px-6">
+    <div className="flex min-h-svh flex-col">
+      <header className="border-border bg-background/75 supports-[backdrop-filter]:bg-background/60 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md md:px-6">
         <Link
           to="/dashboard"
           className="font-heading text-foreground text-lg font-semibold tracking-tight"
@@ -247,10 +254,17 @@ export function StrategyDetailPage() {
           Algo
         </Link>
         <Link
-          to="/dashboard/strategies"
+          to={
+            detail?.stratergiesTypeId && detail?.stratergiesTypeName
+              ? strategyTypePath({
+                  id: detail.stratergiesTypeId,
+                  stratergiesType: detail.stratergiesTypeName,
+                })
+              : '/dashboard/strategies'
+          }
           className={buttonVariants({ variant: 'outline', size: 'sm' })}
         >
-          Back to strategies
+          Back to sessions
         </Link>
       </header>
 
@@ -270,6 +284,7 @@ export function StrategyDetailPage() {
                     {detail.strategy_name}
                   </h1>
                   <p className="text-muted-foreground mt-1 text-sm">
+                    {typeName ? `${typeName} · ` : null}
                     {configs.length === 0
                       ? 'No config rows yet.'
                       : `${configs.length} config row${configs.length === 1 ? '' : 's'}`}
@@ -383,6 +398,7 @@ export function StrategyDetailPage() {
       <StrategyConfigFormDialog
         open={formOpen}
         mode={formMode}
+        stratergyType={typeName ?? ''}
         initial={editingConfig}
         saving={saving}
         onOpenChange={(open) => {
