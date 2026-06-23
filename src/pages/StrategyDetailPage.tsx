@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import { ArrowDown, ArrowUp, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 
 import { RunToggle, isRunOn } from '@/components/RunToggle'
 import { StrategyConfigFormDialog } from '@/components/StrategyConfigFormDialog'
@@ -31,7 +31,9 @@ import {
   type StrategyConfigInput,
   type StrategyGroupDetail,
 } from '@/lib/strategies-api'
-import { TIME_FIELDS, formatTime24 } from '@/lib/time-utils'
+import { TIME_FIELDS, formatTime24, timeToSortValue } from '@/lib/time-utils'
+
+type AtmTimeSort = 'none' | 'asc' | 'desc'
 
 const TABLE_COLUMNS: {
   key: keyof StrategyConfig
@@ -123,6 +125,7 @@ export function StrategyDetailPage() {
   )
   const [deleting, setDeleting] = useState(false)
   const [togglingRunId, setTogglingRunId] = useState<string | null>(null)
+  const [atmTimeSort, setAtmTimeSort] = useState<AtmTimeSort>('none')
 
   const loadDetail = useCallback(async () => {
     if (!stratergyId) {
@@ -149,6 +152,27 @@ export function StrategyDetailPage() {
   }, [loadDetail])
 
   const configs = detail?.strategy ?? []
+
+  const sortedConfigs = useMemo(() => {
+    if (atmTimeSort === 'none') return configs
+    const indexed = configs.map((row, index) => ({ row, index }))
+    indexed.sort((a, b) => {
+      const cmp =
+        timeToSortValue(a.row.at_time_money) -
+        timeToSortValue(b.row.at_time_money)
+      if (cmp !== 0) return atmTimeSort === 'asc' ? cmp : -cmp
+      return a.index - b.index
+    })
+    return indexed.map(({ row }) => row)
+  }, [configs, atmTimeSort])
+
+  function cycleAtmTimeSort() {
+    setAtmTimeSort((prev) => {
+      if (prev === 'none') return 'asc'
+      if (prev === 'asc') return 'desc'
+      return 'none'
+    })
+  }
 
   function openCreateForm() {
     setFormMode('create')
@@ -323,7 +347,43 @@ export function StrategyDetailPage() {
                               key={col.key}
                               className="text-muted-foreground px-4 py-3 text-left font-medium whitespace-nowrap"
                             >
-                              {col.label}
+                              {col.key === 'at_time_money' ? (
+                                <button
+                                  type="button"
+                                  onClick={cycleAtmTimeSort}
+                                  className="hover:text-foreground inline-flex items-center gap-1 transition-colors"
+                                  aria-label={
+                                    atmTimeSort === 'asc'
+                                      ? 'ATM time sorted ascending. Click for descending.'
+                                      : atmTimeSort === 'desc'
+                                        ? 'ATM time sorted descending. Click to clear sort.'
+                                        : 'Sort by ATM time ascending'
+                                  }
+                                >
+                                  {col.label}
+                                  {atmTimeSort === 'asc' ? (
+                                    <ArrowUp
+                                      className="size-3.5 shrink-0"
+                                      aria-hidden
+                                    />
+                                  ) : atmTimeSort === 'desc' ? (
+                                    <ArrowDown
+                                      className="size-3.5 shrink-0"
+                                      aria-hidden
+                                    />
+                                  ) : (
+                                    <span
+                                      className="inline-flex shrink-0 flex-col opacity-40"
+                                      aria-hidden
+                                    >
+                                      <ArrowUp className="size-2.5 -mb-1" />
+                                      <ArrowDown className="size-2.5" />
+                                    </span>
+                                  )}
+                                </button>
+                              ) : (
+                                col.label
+                              )}
                             </th>
                           ))}
                           <th className="text-muted-foreground px-4 py-3 text-left font-medium whitespace-nowrap">
@@ -335,7 +395,7 @@ export function StrategyDetailPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {configs.map((row) => (
+                        {sortedConfigs.map((row) => (
                           <tr
                             key={row.id}
                             className="border-border hover:bg-muted/30 border-b last:border-0"

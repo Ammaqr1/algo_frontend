@@ -88,6 +88,17 @@ export function combineTimeParts(
   return `${hour}:${minute}`
 }
 
+/** Seconds since midnight for sorting times; invalid/missing values sort first. */
+export function timeToSortValue(value: string | null | undefined): number {
+  if (!value) return -1
+  const match = parseTimeMatch(value)
+  if (!match) return -1
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  const seconds = match[3] !== undefined ? Number(match[3]) : 0
+  return hours * 3600 + minutes * 60 + seconds
+}
+
 export function timeFieldUsesSeconds(
   key: TimeField
 ): key is TimeFieldWithSeconds {

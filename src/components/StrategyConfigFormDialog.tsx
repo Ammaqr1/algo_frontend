@@ -341,7 +341,7 @@ export function StrategyConfigFormDialog({
 
             {TIME_FIELDS.map((key) => {
               const required = REQUIRED_TIME_FIELD_SET.has(key)
-              const withSeconds = timeFieldUsesSeconds(key) && _stratergyType === 'Straddle'
+              const withSeconds = timeFieldUsesSeconds(key) 
               
               const error = required
                 ? fieldErrors[key as RequiredTimeField]
