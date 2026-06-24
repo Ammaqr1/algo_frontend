@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { buttonVariants } from '@/components/ui/button'
+import { isRunOn } from '@/components/RunToggle'
 import {
   fetchRunningSchedule,
   type RunningSchedule,
@@ -34,10 +35,19 @@ function ScheduleItemCard({ item }: { item: ScheduledStrategyItem }) {
         ATM {formatTime24(item.at_time_money)} · Start{' '}
         {formatTime24(item.start_time)} · End {formatTime24(item.end_time)}
       </div>
-      {item.matchReason === 'run_today' ? (
-        <span className="bg-primary/10 text-primary inline-block rounded px-1.5 py-0.5 text-xs font-medium">
-          Run today
-        </span>
+      {item.matchReason === 'run_today' || isRunOn(item.paper_trade) ? (
+        <div className="flex flex-wrap gap-1">
+          {item.matchReason === 'run_today' ? (
+            <span className="bg-primary/10 text-primary inline-block rounded px-1.5 py-0.5 text-xs font-medium">
+              Run today
+            </span>
+          ) : null}
+          {isRunOn(item.paper_trade) ? (
+            <span className="bg-primary/10 text-primary inline-block rounded px-1.5 py-0.5 text-xs font-medium">
+              Paper trade
+            </span>
+          ) : null}
+        </div>
       ) : null}
     </div>
   )
