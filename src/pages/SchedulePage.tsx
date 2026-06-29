@@ -143,7 +143,7 @@ export function SchedulePage() {
             </h1>
             <p className="text-muted-foreground mt-1 text-sm">
               Active configs for today and tomorrow, grouped by strategy type.
-              Today includes weekday matches and run-today overrides.
+              Weekday matches and run-today overrides apply to both columns.
             </p>
           </div>
 

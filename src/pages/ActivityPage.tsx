@@ -37,8 +37,8 @@ export function ActivityPage() {
   const defaults = defaultDateRange()
   const [dateFrom, setDateFrom] = useState(defaults.from)
   const [dateTo, setDateTo] = useState(defaults.to)
-  const [userOptions, setUserOptions] = useState<string[]>([])
-  const [userName, setUserName] = useState('')
+  const [userOptions, setUserOptions] = useState<string[]>(['testing'])
+  const [userName, setUserName] = useState('testing')
   const [strategies, setStrategies] = useState<ActivityStrategyOption[]>([])
   const [strategyId, setStrategyId] = useState('')
   const [mode, setMode] = useState('')
@@ -86,12 +86,12 @@ export function ActivityPage() {
         if (users.length > 0) {
           setUserOptions(users)
           setUserName((current) =>
-            current === '' || users.includes(current) ? current : ''
+            current && users.includes(current) ? current : users[0]
           )
         }
       })
       .catch(() => {
-        /* dropdown stays empty except "All users" */
+        /* keep hardcoded testing fallback */
       })
   }, [])
 
