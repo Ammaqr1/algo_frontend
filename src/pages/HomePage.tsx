@@ -1,11 +1,17 @@
 import { Link, Navigate } from 'react-router-dom'
 
 import { buttonVariants } from '@/components/ui/button'
-import { isAuthenticated } from '@/lib/auth-api'
+import { useValidatedSession } from '@/hooks/useValidatedSession'
 import { cn } from '@/lib/utils'
 
 export function HomePage() {
-  if (isAuthenticated()) {
+  const { state } = useValidatedSession()
+
+  if (state === 'loading') {
+    return null
+  }
+
+  if (state === 'valid') {
     return <Navigate to="/dashboard" replace />
   }
 

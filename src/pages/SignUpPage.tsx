@@ -13,10 +13,12 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { isAuthenticated, persistSession, signupRequest } from '@/lib/auth-api'
+import { persistSession, signupRequest } from '@/lib/auth-api'
+import { useValidatedSession } from '@/hooks/useValidatedSession'
 
 export function SignUpPage() {
   const navigate = useNavigate()
+  const { state: sessionState } = useValidatedSession()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,7 +26,11 @@ export function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
-  if (isAuthenticated()) {
+  if (sessionState === 'loading') {
+    return null
+  }
+
+  if (sessionState === 'valid') {
     return <Navigate to="/dashboard" replace />
   }
 

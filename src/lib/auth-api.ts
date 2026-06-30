@@ -175,3 +175,29 @@ export function isAuthenticated(): boolean {
   }
   return true;
 }
+
+/** Confirms the stored token is valid for the current backend (user exists in DB). */
+export async function validateSession(): Promise<AuthUser | null> {
+  const token = getStoredToken();
+  if (!token || isTokenExpired(token)) {
+    clearSession();
+    return null;
+  }
+
+  const res = await fetch(`${API_BASE}/api/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 401) {
+    clearSession();
+    return null;
+  }
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const user = (await res.json()) as AuthUser;
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  return user;
+}
