@@ -18,13 +18,11 @@ export type BuyOrderDetail = {
   order_id?: string
   r_quantity?: string
   r_buy_price?: string
+  filled_price?: string | null
+  order_flow?: unknown
   r_ltq?: string | null
   o_status?: string
   o_buyed_quantity?: string
-  m_quantity?: string | null
-  m_price?: string | null
-  m_result?: string | null
-  m_buyed_quantity?: string | null
 }
 
 export type SellOrderDetail = {
@@ -37,17 +35,15 @@ export type SellOrderDetail = {
   order_id?: string
   r_quantity?: string
   r_ltq?: string | null
+  filled_price?: string | null
+  order_flow?: unknown
   mode?: string
   stop_loss_price?: number
   stop_loss_trigger_price?: number
   target_price?: number
   target_trigger_price?: number
   o_status?: string
-  o_buyed_quantity?: number
-  m_quantity?: number | null
-  m_price?: number | null
-  m_result?: string | null
-  m_buyed_quantity?: number | null
+  o_buyed_quantity?: number | string
 }
 
 export type OrderHistoryItem = {

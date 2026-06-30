@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 import { getStoredUser } from '@/lib/auth-api'
 import {
   createStrategyType,
@@ -30,6 +31,9 @@ import {
   updateStrategyType,
   type StrategyType,
 } from '@/lib/strategies-api'
+
+const actionButtonClassName =
+  'border-border/60 bg-background/75 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md opacity-50'
 
 export function StrategiesPage() {
   const navigate = useNavigate()
@@ -202,7 +206,13 @@ export function StrategiesPage() {
                 Choose a strategy type to view sessions and configs.
               </p>
             </div>
-            <Button type="button" onClick={openCreateDialog}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              className={actionButtonClassName}
+              onClick={openCreateDialog}
+            >
               <PlusIcon data-icon="inline-start" />
               New strategy type
             </Button>
@@ -262,8 +272,10 @@ export function StrategiesPage() {
                       >
                         <Button
                           type="button"
-                          variant="ghost"
+                          variant="outline"
                           size="icon-sm"
+                          disabled
+                          className={actionButtonClassName}
                           aria-label={`Edit ${type.stratergiesType}`}
                           onClick={() => openEditDialog(type)}
                         >
@@ -271,11 +283,14 @@ export function StrategiesPage() {
                         </Button>
                         <Button
                           type="button"
-                          variant="ghost"
+                          variant="outline"
                           size="icon-sm"
-                          className="text-destructive hover:text-destructive"
+                          disabled
+                          className={cn(
+                            actionButtonClassName,
+                            'text-destructive hover:text-destructive'
+                          )}
                           aria-label={`Delete ${type.stratergiesType}`}
-                          disabled={deleting && deletingType?.id === type.id}
                           onClick={() => openDeleteDialog(type)}
                         >
                           <Trash2Icon />
